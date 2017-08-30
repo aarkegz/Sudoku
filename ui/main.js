@@ -1,4 +1,4 @@
-function initTable() {
+function initGameTable() {
     for (var i = 0; i < 9; ++i) {
         var tr = $("<tr></tr>");
         for (var j = 0; j < 9; ++j) {
@@ -18,4 +18,12 @@ function initTable() {
 
         $("table.table_main").append(tr);
     }
+}
+
+DIFFICULTIES = 10
+function initDifficultyTable() {
+    var tr = $("<tr></tr>");
+
+    for (var i = 1; i <= DIFFICULTIES; ++i) tr.append("<td>" + i + "</td>");
+    $("table.table_difficulty").append(tr);
 }
