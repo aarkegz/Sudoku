@@ -1,0 +1,43 @@
+.center {
+    margin: 0 auto;
+    width: auto;
+}
+
+.center * {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.table_main {
+    border: 0px;
+    border-collapse: separate;
+    border-spacing: 0px;
+
+    font-family: "Microsoft YaHei";
+    font-size: 24px;
+}
+
+table.table_main tr {
+    border: 0px;
+    margin: 0px;
+}
+
+table.table_main tr td.cell {
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+
+    text-align: center;
+    border: #B47157 solid 1px;
+}
+
+p.smallchars {
+    font-size: 9px; 
+    line-height: 12px;
+}
+
+/*
+body {
+    background-color: #FB966E;
+}
+*/
