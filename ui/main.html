@@ -8,19 +8,46 @@
     </head>
 
     <body>
-        <div name="difficulty" class="center">
-            <p class="title">难度选择</p>
-            <table class="table_difficulty">
-            </table>
-        </div>
+        <div class="toplevel_wrapper"><div>
+            <div id="difficulty" class="center">
+                <p class="bigtitle">数独</p>
+                <p class="title">难度选择</p>
+                <table class="table_difficulty">
+                </table>
+            </div>
+            <div id="game" class="center" style="display: none;">
+                <div class="horizen_wrapper" style="display: none;">
+                    <p class="title">难度：</p>
+                    <p class="title_diff" id="diff"></p>
+                    <p class="title" id="title_time">时间：</p>
+                    <p class="title_time" id="time">00:00</p>
 
-        <div name="game" class="center">
-            <table class="table_main">
-            </table>
-        </div>
+                    <table class="table_control">
+                        <tr>
+                            <td id="start" onclick="onStartClick()"><img src="start.png"/></td>
+                            <td id="pause" onclick="onPauseClick()"><img src="pause.png"/></td>
+                            <td id="restart" onclick="onRestartClick()"><img src="restart.png"/></td>
+                            <td id="exit" onclick="onExitClick()"><img src="exit.png"/></td>
+                        </tr>
+                    </table>
+                </div>
+                <div>
+                    <table class="table_main">
+                    </table>
+                </div>
+                <div>
+                    <table class="table_numbers">
+                    </table>
+                <div>
+            </div>
+        </div></div>
     </body>
 
     <script lang="javascript">
+        document.oncontextmenu = function(e) {
+            e.preventDefault();
+        }
+
         initGameTable();
         initDifficultyTable();
     </script>

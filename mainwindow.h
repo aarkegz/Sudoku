@@ -18,8 +18,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-
-    QDir *appDir;
 };
 
 #endif  // MAINWINDOW_H

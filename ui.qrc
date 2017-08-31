@@ -4,5 +4,9 @@
         <file>ui/main.css</file>
         <file>ui/main.html</file>
         <file>ui/main.js</file>
+        <file>ui/exit.png</file>
+        <file>ui/pause.png</file>
+        <file>ui/restart.png</file>
+        <file>ui/start.png</file>
     </qresource>
 </RCC>

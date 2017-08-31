@@ -151,10 +151,14 @@ compiler_rcc_clean:
 	-$(DEL_FILE) debug\qrc_ui.cpp
 debug\qrc_ui.cpp: ui.qrc \
 		..\..\..\..\Qt\5.9.1\msvc2017_64\bin\rcc.exe \
+		ui\restart.png \
 		ui\main.js \
 		ui\main.html \
+		ui\start.png \
+		ui\exit.png \
 		ui\jquery-3.2.1.min.js \
-		ui\main.css
+		ui\main.css \
+		ui\pause.png
 	C:\Qt\5.9.1\msvc2017_64\bin\rcc.exe -name ui ui.qrc -o debug\qrc_ui.cpp
 
 compiler_moc_predefs_make_all: debug\moc_predefs.h
