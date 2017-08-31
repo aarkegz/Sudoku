@@ -5,3 +5,5 @@
 
 Makefile*
 .qmake.stash
+*.opt
+*.pro.user

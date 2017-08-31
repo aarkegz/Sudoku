@@ -44,16 +44,20 @@ function onPauseClick() {
     setPause(true);
 }
 
-function onResetClick() {
+function onRestartClick() {
     gameStart();
 }
 
 function onExitClick() {
+    resetTimer();
+    $(".horizen_wrapper").fadeOut();
 
+    $("#difficulty").delay(200).slideDown(300);
+    $("#game").delay(200).slideUp(300);
 }
 
 function onCellClick(i, j) {
-    console.log(i, j);
+    select("" + i + j);
 }
 
 DIFFICULTIES = 10
@@ -77,15 +81,6 @@ function onDifficultyChosen(dif) {
     gameStart();
 }
 
-INTERVAL_OBJ = null
-function gameStart() {
-    startTimer();
-    setPause(false);
-
-    if (INTERVAL_OBJ != null) clearInterval(INTERVAL_OBJ);
-    INTERVAL_OBJ = setInterval("displayTime()", 200);
-}
-
 function displayDifficulty() {
     for (var i = 1; i <= DIFFICULTIES; ++i)
         if (i == CURR_DIFF) {
@@ -98,7 +93,7 @@ function displayDifficulty() {
 }
 
 function displayTime() {
-    $("#time").text(getTimeStr());
+    $("#time").text(getTimeStr()); 
 }
 
 // function about timer
@@ -131,7 +126,7 @@ function resetTimer() {
 
 function setPause(pausing) {
     if (pausing) {
-        $("#title_time").text("暂停中");$("#title_time").css("color", LESS_BORDER_COLOR);
+        $("#title_time").text("暂停中").css("color", LESS_BORDER_COLOR);
         $("#start").show();
         $("#pause").hide();
 
@@ -146,3 +141,36 @@ function setPause(pausing) {
 }
 
 // functions about game itself
+GAMESTATUS = null;
+/* GAMESTATUS is a json object following the following format
+{
+    "00" : [ 1, 2, 3 ],           <- numbers in this cell
+    "00_fixed" : false，          <- is this cell fixed (filled in the origin status)
+    "01" : [],                    <- an empty cell
+    "01_fixed" : false,
+    "02" : [ 4 ],
+    "02_fixed" : true,
+    ...
+    "08" : [ 7 ],
+    "08_fixed" : true,
+    "10" : [5],
+    "10_fixed" : false,
+    ...
+    "88" : [9],
+    "88_fixed" : true             <- though the order is not quite important ...
+}
+*/
+
+INTERVAL_OBJ = null
+function gameStart() {
+    resetTimer();
+    startTimer();
+    setPause(false);
+
+    if (INTERVAL_OBJ != null) clearInterval(INTERVAL_OBJ);
+    INTERVAL_OBJ = setInterval("displayTime()", 200);
+}
+
+function select(name) {
+    
+}
