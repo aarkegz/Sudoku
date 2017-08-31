@@ -2,3 +2,6 @@
 
 
 [Rr]elease/
+
+Makefile*
+.qmake.stash
