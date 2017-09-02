@@ -94,7 +94,7 @@ table.table_main tr td.cell {
     line-height: 40px;
 
     text-align: center;
-    border: #B47157 solid 1px;
+    border: #B35C37 solid 1px;
 }
 
 table.table_numbers {
@@ -122,12 +122,13 @@ table.table_numbers tr td {
 }
 
 p.smallchars {
-    font-size: 9px; 
+    font-size: 10px; 
     line-height: 12px;
 }
 
 p.mediumchars {
-    font-size: 12px;
+    font-size: 14px;
+    line-height: 18px;
 }
 
 table.table_difficulty {
