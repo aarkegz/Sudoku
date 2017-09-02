@@ -55,14 +55,14 @@ function Cell(i, j, fixed) {
     this.selector = "#cell" + i + j;
     this.fixed = fixed;
 
-    this.content = emptyContent();
+    this.content = Cell.emptyContent();
 
     this.nums = [];
 }
 
 Cell.emptyContent = function() {
     var rv = [];
-    for (var i = 0; i < 9; ++i) rv.push(false);
+    for (var i = 0; i <= 9; ++i) rv.push(false);
 
     return rv;
 }
@@ -71,38 +71,43 @@ Cell.setBackgroundColor = function(color) {
     $(this.selector).css("background-color", color);
 }
 
-        // content = [bool * 9]
+        // content = bool[1 ~ 9]
 Cell.setContent = function(content) {
     this.nums = [];
-    for (var i = 0; i < 9; ++i) if (this.content[i] = content[i]) this.nums.push(i + 1);
+    for (var i = 1; i <= 9; ++i) if (this.content[i] = content[i]) this.nums.push(i);
 }
 
 Cell.setNums = function(nums) {
-    this.content = emptyContent();
+    this.content = Cell.emptyContent();
     this.nums = nums;
     for (var i in nums) this.content[i] = true;
 }
 
 Cell.getContent = function() { return this.content; }
-Cell.getNums = function() { return this.Nums; }
+Cell.getNums = function() { return this.nums; }
+
+Cell.calcNums = function() {
+    this.nums = [];
+    for (var i = 1; i <= 9; ++i) if (this.content[i]) this.nums.push(i);
+}
 
 Cell.showContent = function() {
     len = this.nums.length;
     target = $(this.selector);
 
     if (len == 0) {
-        target.text("");
+        target.text("　");
     } else if (len == 1) {
-        target.text(nums[0]);
+        target.text(this.nums[0]);
     } else { 
         cont = ""
         align = len <= 4 ? 2 : 3;
         fontClass = len <= 4 ? "mediumchars" : "smallchars";
 
-        cont += nums[0];
+        cont += this.nums[0];
         for (var i = 1; i < len; ++i) {
             cont += (i % align == 0) ? "<br/>" : " ";
-            cont += nums[i];
+            cont += this.nums[i];
         }
 
         target.html("<p class=\"" + fontClass + "\">" + cont + "</p>");
@@ -111,6 +116,8 @@ Cell.showContent = function() {
     if (this.fixed) target.css("color", BLACK_COLOR);
     else target.css("color", UNFIXED_COLOR);
 }
+
+Cell.prototype = Cell;
 
 // handler
 function onStartClick() {
@@ -136,41 +143,47 @@ function onExitClick() {
 function onCellClick(i, j) {
     if (PAUSING) return;
 
-    if (CELL_SELECTED) {
+    if (anyCellSelected()) {
+        currI = CELL_SELECTED.i;
+        currJ = CELL_SELECTED.j;
+
         cancelCellSelection();
-        if ((CURR_I == i && CURR_J == j) || GAMESTATUS["" + i + j + "_fixed"])  return;
+        if ((currI == i && currJ == j) || TABLE[i][j].fixed)  return;
     }
 
-    if (GAMESTATUS["" + i + j + "_fixed"]) return;
+    if (TABLE[i][j].fixed) return;
 
     selectCell(i, j);
 }
 
 function onNumberClick(i) {
-    if (PAUSING || !CELL_SELECTED) return;
+    if (PAUSING || !anyCellSelected()) return;
 
     CONTAINS[i] = !CONTAINS[i];
-    refreshStatus();
-    refreshNumberDisplay();
-    drawCell(CURR_I, CURR_J);
-    drawSelectedCell();
+    CELL_SELECTED.calcNums();
+
+    onSelectedCellContentChange();
 }
 
 function onClearClick() {
-    if (PAUSING || !CELL_SELECTED) return;
+    if (PAUSING || !anyCellSelected()) return;
 
     for (var i = 1; i <= 9; ++i) CONTAINS[i] = false;
+    CELL_SELECTED.calcNums();
 
-    refreshStatus();
-    refreshNumberDisplay();
-    drawCell(CURR_I, CURR_J);
-    drawSelectedCell();
+    onSelectedCellContentChange();
+}
+
+function onSelectedCellContentChange() {
+    refreshNumberButtons();
+    CELL_SELECTED.showContent();
+    refreshTableBackgroundColor();
 }
 
 function onMarkClick() {
-    if (PAUSING || !CELL_SELECTED) return;
+    if (PAUSING || !anyCellSelected()) return;
 
-    MARKED[CURR_I][CURR_J] = !MARKED[CURR_I][CURR_J];
+    MARKED[CELL_SELECTED.i][CELL_SELECTED.j] = !MARKED[CELL_SELECTED.i][CELL_SELECTED.j];
     refreshMarkButton();
 }
 
@@ -190,81 +203,50 @@ function displayTime() {
     $("#time").text(getTimeStr()); 
 }
 
-function setRowColor(i, color) {
-    for (var it = 0; it < 9; ++it) $("#cell" + i + it).css("background-color", color);
-}
-
-function setColumnColor(i, color) {
-    for (var it = 0; it < 9; ++it) $("#cell" + it + i).css("background-color", color);
-}
-
-function setCellColor(i, j, color) {
-    $("#cell" + i + j).css("background-color", color);
-}
-
-function drawTable() {
+function showTableContent() {
     for (var i = 0; i < 9; ++i) 
         for (var j = 0; j < 9; ++j) 
-            drawCell(i, j);
+            TABLE[i][j].showContent();
 }
 
-function drawCell(i, j) {
-    name = "" + i + j;
-    nums = GAMESTATUS[name];
-    fixed = GAMESTATUS[name + "_fixed"];
+function paintCellWithSameNumberAsSelectedOne() {
+    if (CELL_SELECTED.getNums().length != 1) return;
 
-    if (nums.length == 0) {
-        $("#cell" + name).text("");
-    } else if (nums.length == 1) {
-        $("#cell" + name).text(nums[0]);
-    } else if (nums.length <= 4) {
-        cont = ""
-        for (var i = 0; i < nums.length; ++i) {
-            cont += nums[i];
+    currI = CELL_SELECTED.i;
+    currJ = CELL_SELECTED.j;
 
-            if (i < nums.length - 1) {
-                if (i % 2 == 1) cont += "<br/>";
-                else cont += " ";
-            }
-        }
-
-        $("#cell" + name).html("<p class=\"mediumchars\">" + cont + "</p>");
-    } else {
-        cont = ""
-        for (var i = 0; i < nums.length; ++i) {
-            cont += nums[i];
-
-            if (i < nums.length - 1) {
-                if (i % 3 == 2) cont += "<br/>";
-                else cont += " ";
-            }
-        }
-
-        $("#cell" + name).html("<p class=\"smallchars\">" + cont + "</p>");
-    }
-
-    if (fixed) $("#cell" + name).css("color", BLACK_COLOR);
-    else $("#cell" + name).css("color", UNFIXED_COLOR);
+    for (var i = 0; i < 9; ++i) 
+        for (var j = 0; j < 9; ++j) 
+            if ((i != currI || j != currJ) && TABLE[i][j].getNums().length == 1 && TABLE[i][j].getNums()[0] == CELL_SELECTED.getNums()[0])
+                TABLE[i][j].setBackgroundColor(SAME_COLOR);
 }
 
 function clearAllCellColor() {
-    for (var _i = 0; _i < 9; ++_i) for (var _j = 0; _j < 9; ++_j) setCellColor(_i, _j, BACKGROUND_COLOR);
+    for (var i = 0; i < 9; ++i) for (var j = 0; j < 9; ++j) TABLE[i][j].setBackgroundColor(BACKGROUND_COLOR);
 }
 
-function paintCellWithSameNumber(i, j) {
-    if (GAMESTATUS["" + i + j].length != 1) return;
 
-    for (var _i = 0; _i < 9; ++_i) 
-        for (var _j = 0; _j < 9; ++_j) 
-            if ((i != _i || j != _j) && GAMESTATUS["" + _i + _j].length == 1 && GAMESTATUS["" + i + j][0] == GAMESTATUS["" + _i + _j][0])
-                $("#cell" + _i + _j).css("background-color", SAME_COLOR);
+function refreshTableBackgroundColor() {
+    clearAllCellColor();
+
+    if (anyCellSelected()) {
+        for (var it = 0; it < 9; ++it) TABLE[CELL_SELECTED.i][it].setBackgroundColor(RELATED_COLOR);
+        for (var it = 0; it < 9; ++it) TABLE[it][CELL_SELECTED.j].setBackgroundColor(RELATED_COLOR);
+    }
+
+    paintMarkedCells();
+    
+    if (anyCellSelected()) {
+        paintCellWithSameNumberAsSelectedOne();
+        CELL_SELECTED.setBackgroundColor(SELECTED_COLOR);
+    }
 }
 
-function clearAllNumberColor() {
+function clearAllNumberButtonColor() {
     for (var _i = 1; _i <= 9; ++_i) $("#number" + _i).css("background-color", BACKGROUND_COLOR);
 }
 
-function refreshNumberDisplay() {
+function refreshNumberButtons() {
     for (var _i = 1; _i <= 9; ++_i) 
         if (CONTAINS[_i])
             $("#number" + _i).css("background-color", SELECTED_COLOR);
@@ -272,26 +254,14 @@ function refreshNumberDisplay() {
             $("#number" + _i).css("background-color", BACKGROUND_COLOR);
 }
 
+MARKED = [];
 function refreshMarkButton() {
-    if (CELL_SELECTED && MARKED[CURR_I][CURR_J]) $("#markButton").css("background-color", MARKED_COLOR);
+    if (anyCellSelected() && MARKED[CELL_SELECTED.i][CELL_SELECTED.j]) $("#markButton").css("background-color", MARKED_COLOR);
     else $("#markButton").css("background-color", BACKGROUND_COLOR);
 }
 
-function drawSelectedCell() {
-    clearAllCellColor();
-
-    setRowColor(CURR_I, RELATED_COLOR);
-    setColumnColor(CURR_J, RELATED_COLOR);
-
-    paintMarkedCells();
-    paintCellWithSameNumber(CURR_I, CURR_J);
-
-    setCellColor(CURR_I, CURR_J, SELECTED_COLOR);
-}
-
-MARKED = [];
 function paintMarkedCells() {
-    for (var i = 0; i < 9; ++i) for (var j = 0; j < 9; ++j) if (MARKED[i][j]) $("#cell" + i + j).css("background-color", MARKED_COLOR);
+    for (var i = 0; i < 9; ++i) for (var j = 0; j < 9; ++j) if (MARKED[i][j]) TABLE[i][j].setBackgroundColor(MARKED_COLOR);
 }
 
 // function about timer
@@ -342,25 +312,6 @@ function setPause(pausing) {
 }
 
 // functions about game itself
-GAMESTATUS = null;
-/* GAMESTATUS is a json object following the following format
-{
-    "00" : [ 1, 2, 3 ],           <- numbers in this cell
-    "00_fixed" : false，          <- is this cell fixed (filled in the origin status)
-    "01" : [],                    <- an empty cell
-    "01_fixed" : false,
-    "02" : [ 4 ],
-    "02_fixed" : true,
-    ...
-    "08" : [ 7 ],
-    "08_fixed" : true,
-    "10" : [5],
-    "10_fixed" : false,
-    ...
-    "88" : [9],
-    "88_fixed" : true             <- though the order is not quite important ...
-}
-*/
 TABLE = []
 
 DEFAULT_MATRIX = [
@@ -384,15 +335,9 @@ function makeDefaultStatus() {
 
         for (var j = 0; j < 9; ++j) {
             TABLE[i][j] = new Cell(i, j, (Math.random() >= 0.5));
-
-            rv["" + i + j + "_fixed"] = (Math.random() >= 0.5);
-            rv["" + i + j] = rv["" + i + j + "_fixed"] ? [DEFAULT_MATRIX[i][j]] : [];
-
-
+            TABLE[i][j].setNums(TABLE[i][j].fixed ? [DEFAULT_MATRIX[i][j]] : []);
         }
     }
-
-    GAMESTATUS = rv;
 }
 
 INTERVAL_OBJ = null;
@@ -405,49 +350,41 @@ function gameStart() {
     INTERVAL_OBJ = setInterval("displayTime()", 200);
 
     makeDefaultStatus();
-    drawTable();
 
+    MARKED = []
     for (var i = 0; i < 9; ++i) {
         var r = [];
 
         for (var j = 0; j < 9; ++j) r.push(false);
         MARKED.push(r);
     }
+
+    showTableContent();
+    refreshTableBackgroundColor();
 }
 
-CELL_SELECTED = false;
-CURR_I = 0; CURR_J = 0;
+CELL_SELECTED = null;
 CONTAINS = {}
+
+function anyCellSelected() {
+    return CELL_SELECTED != null;
+}
+
 function selectCell(i, j) {
-    CELL_SELECTED = true;
-    CURR_I = i; CURR_J = j;
+    CELL_SELECTED = TABLE[i][j];
 
-    CONTAINS = {}
-    nums = GAMESTATUS["" + i + j];
-    for (var _i = 1; _i <= 9; ++_i) {
-        CONTAINS[_i] = ($.inArray(_i, nums) != -1);
-    }
+    CONTAINS = TABLE[i][j].getContent();
 
-    drawCell(i, j);
-    drawSelectedCell();
-    refreshNumberDisplay();
+    refreshTableBackgroundColor();
+    refreshNumberButtons();
     refreshMarkButton();
 }
 
 function cancelCellSelection() {
-    CELL_SELECTED = false;
-    clearAllCellColor();
-    paintMarkedCells();
-
-    clearAllNumberColor();
-}
-
-function refreshStatus() {
-    val = [];
-
-    for (var _i = 1; _i <= 9; ++_i) if (CONTAINS[_i]) val.push(_i);
-
-    GAMESTATUS["" + CURR_I + CURR_J] = val;
+    CELL_SELECTED = null;
+    
+    refreshTableBackgroundColor();
+    clearAllNumberButtonColor();
 }
 
 CURR_DIFF = 0;
