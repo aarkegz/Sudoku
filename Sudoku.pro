@@ -27,11 +27,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    sudokustatus.cpp
+    conn.cpp
 
 HEADERS += \
         mainwindow.h \
-    sudokustatus.h
+    conn.h
 
 FORMS += \
         mainwindow.ui

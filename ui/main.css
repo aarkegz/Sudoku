@@ -105,6 +105,8 @@ table.table_numbers {
 
     font-family: "Microsoft YaHei";
     font-size: 24px;
+
+    width: 532px;
 }
 
 table.table_numbers tr {
@@ -153,6 +155,17 @@ table.table_difficulty tr td {
 
     text-align: center;
     border: #B47157 solid 1px;
+}
+
+table.table_control {
+    width : 130px;
+}
+
+p.finish_tip {
+    font-family: "Microsoft YaHei";
+    font-size: 32px;
+    
+    width: 532px;
 }
 
 /*

@@ -8,5 +8,7 @@
         <file>ui/pause.png</file>
         <file>ui/restart.png</file>
         <file>ui/start.png</file>
+        <file>ui/undo.png</file>
+        <file>ui/redo.png</file>
     </qresource>
 </RCC>

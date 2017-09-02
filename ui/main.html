@@ -2,6 +2,7 @@
     <head>
         <meta http-equiv="charset" content="utf-8">
         <script src="jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>        
         <script src="main.js"></script>
         <link rel="stylesheet" type="text/css" href="main.css" />
         <title></title>
@@ -24,6 +25,8 @@
 
                     <table class="table_control">
                         <tr>
+                            <td id="undo" onclick="onUndoClick()"><img src="undo.png"/></td>
+                            <td id="redo" onclick="onRedoClick()"><img src="redo.png"/></td>
                             <td id="start" onclick="onStartClick()"><img src="start.png"/></td>
                             <td id="pause" onclick="onPauseClick()"><img src="pause.png"/></td>
                             <td id="restart" onclick="onRestartClick()"><img src="restart.png"/></td>

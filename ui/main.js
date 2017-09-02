@@ -48,6 +48,32 @@ function initDifficultyTable() {
     $("table.table_difficulty").append(tr);
 }
 
+window.onload = function() {
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+        window.conn = channel.objects.conn;
+
+        conn.sendPuzzle.connect(function(puzzle) {
+            obj = JSON.parse(puzzle);
+
+            board = obj.board;
+            fixed = obj.fixed;
+
+            TABLE = [];
+
+            for (var i = 0; i < 9; ++i) {
+                TABLE[i] = [];
+
+                for (var j = 0; j < 9; ++j) {
+                    TABLE[i][j] = new Cell(i, j, fixed[i][j]);
+                    TABLE[i][j].setNums(TABLE[i][j].fixed ? [board[i][j]] : []);
+                }
+            }
+
+            gameStartTrue();
+        })
+    });
+}
+
 // the cell class
 function Cell(i, j, fixed) {
     this.i = i;
@@ -80,7 +106,7 @@ Cell.setContent = function(content) {
 Cell.setNums = function(nums) {
     this.content = Cell.emptyContent();
     this.nums = nums;
-    for (var i in nums) this.content[i] = true;
+    for (var i in nums) this.content[nums[i]] = true;
 }
 
 Cell.getContent = function() { return this.content; }
@@ -159,6 +185,9 @@ function onCellClick(i, j) {
 function onNumberClick(i) {
     if (PAUSING || !anyCellSelected()) return;
 
+    clearRedoStack();
+    pushUndoStack({ "i" : CELL_SELECTED.i, "j" : CELL_SELECTED.j, "add" : CONTAINS[i] ? [i] : [], "remove" : CONTAINS[i] ? [] : [i]});
+
     CONTAINS[i] = !CONTAINS[i];
     CELL_SELECTED.calcNums();
 
@@ -167,6 +196,9 @@ function onNumberClick(i) {
 
 function onClearClick() {
     if (PAUSING || !anyCellSelected()) return;
+
+    clearRedoStack();
+    pushUndoStack({ "i" : CELL_SELECTED.i, "j" : CELL_SELECTED.j, "add" : CELL_SELECTED.getNums(), "remove" : []});
 
     for (var i = 1; i <= 9; ++i) CONTAINS[i] = false;
     CELL_SELECTED.calcNums();
@@ -178,6 +210,8 @@ function onSelectedCellContentChange() {
     refreshNumberButtons();
     CELL_SELECTED.showContent();
     refreshTableBackgroundColor();
+
+    checkFinished();
 }
 
 function onMarkClick() {
@@ -185,6 +219,18 @@ function onMarkClick() {
 
     MARKED[CELL_SELECTED.i][CELL_SELECTED.j] = !MARKED[CELL_SELECTED.i][CELL_SELECTED.j];
     refreshMarkButton();
+}
+
+function onUndoClick() {
+    if (PAUSING) return;
+
+    undo();
+}
+
+function onRedoClick() {
+    if (PAUSING) return;
+
+    redo();
 }
 
 // displayer
@@ -224,7 +270,6 @@ function paintCellWithSameNumberAsSelectedOne() {
 function clearAllCellColor() {
     for (var i = 0; i < 9; ++i) for (var j = 0; j < 9; ++j) TABLE[i][j].setBackgroundColor(BACKGROUND_COLOR);
 }
-
 
 function refreshTableBackgroundColor() {
     clearAllCellColor();
@@ -327,21 +372,28 @@ DEFAULT_MATRIX = [
 ];
 
 function makeDefaultStatus() {
-    rv = { };
     TABLE = [];
 
     for (var i = 0; i < 9; ++i) {
         TABLE[i] = [];
 
         for (var j = 0; j < 9; ++j) {
-            TABLE[i][j] = new Cell(i, j, (Math.random() >= 0.5));
+            TABLE[i][j] = new Cell(i, j, (Math.random() >= 0.1));
             TABLE[i][j].setNums(TABLE[i][j].fixed ? [DEFAULT_MATRIX[i][j]] : []);
         }
     }
 }
 
+function getPuzzle() {
+    conn.requestPuzzle(CURR_DIFF);
+}
+
 INTERVAL_OBJ = null;
 function gameStart() {
+    getPuzzle();
+}
+
+function gameStartTrue() {
     resetTimer();
     startTimer();
     setPause(false);
@@ -349,7 +401,7 @@ function gameStart() {
     if (INTERVAL_OBJ != null) clearInterval(INTERVAL_OBJ);
     INTERVAL_OBJ = setInterval("displayTime()", 200);
 
-    makeDefaultStatus();
+    // makeDefaultStatus();
 
     MARKED = []
     for (var i = 0; i < 9; ++i) {
@@ -361,6 +413,9 @@ function gameStart() {
 
     showTableContent();
     refreshTableBackgroundColor();
+    
+    $("#redo").css("visibility", "hidden");
+    $("#undo").css("visibility", "hidden");
 }
 
 CELL_SELECTED = null;
@@ -385,6 +440,7 @@ function cancelCellSelection() {
     
     refreshTableBackgroundColor();
     clearAllNumberButtonColor();
+    refreshMarkButton();
 }
 
 CURR_DIFF = 0;
@@ -398,4 +454,106 @@ function onDifficultyChosen(dif) {
     $(".horizen_wrapper").delay(600).fadeIn();
 
     gameStart();
+}
+
+// undo and redo
+undoStack = [];
+redoStack = [];
+
+// stack frame in these two stacks is like
+// { "i" : i, "j" : j, add : [ 1, 2, 3 ], remove : [] }
+// the frame records what SHOULD be done when undo/redo, not what player did
+
+function clearUndoRedoStack() {
+    undoStack = [];
+    redoStack = [];
+}
+
+function clearRedoStack() {
+    redoStack = [];
+    $("#redo").css("visibility", "hidden");
+}
+
+function pushUndoStack(frame) {
+    undoStack.push(frame);
+    $("#undo").css("visibility", "visible");
+}
+
+function undo() {
+    if (undoStack.length == 0) return;
+
+    var frame = undoStack.pop();
+    redoStack.push({ "i" : frame.i, "j" : frame.j, "add" : frame.remove, "remove" : frame.add });
+    $("#redo").css("visibility", "visible");
+
+    selectCell(frame.i, frame.j);
+
+    for (var i in frame.add) CONTAINS[frame.add[i]] = true;
+    for (var i in frame.remove) CONTAINS[frame.remove[i]] = false;
+
+    CELL_SELECTED.calcNums();
+
+    onSelectedCellContentChange();
+
+    if (undoStack.length == 0) $("#undo").css("visibility", "hidden");
+}
+
+function redo() {
+    if (redoStack.length == 0) return;
+
+    var frame = redoStack.pop();
+    undoStack.push({ "i" : frame.i, "j" : frame.j, "add" : frame.remove, "remove" : frame.add });
+    $("#undo").css("visibility", "visible");
+
+    selectCell(frame.i, frame.j);
+
+    for (var i in frame.add) CONTAINS[frame.add[i]] = true;
+    for (var i in frame.remove) CONTAINS[frame.remove[i]] = false;
+
+    CELL_SELECTED.calcNums();
+
+    onSelectedCellContentChange();
+
+    if (redoStack.length == 0) $("#redo").css("visibility", "hidden");
+}
+
+function isFinished() {
+    finished = true;
+    
+    for (var i = 0; i < 9; ++i) {
+        rowSum = 0; columnSum = 0; blockSum = 0;
+
+        for (var j = 0; j < 9; ++j) {
+            ii = parseInt(i / 3) * 3 + parseInt(j / 3);
+            jj = parseInt(i % 3) * 3 + parseInt(j % 3);
+
+            if (TABLE[i][j].getNums().length != 1 || TABLE[j][i].getNums().length != 1 || TABLE[ii][jj].getNums().length != 1) {
+                finished = false; break;
+            }
+
+            rowSum += 1 << (TABLE[i][j].getNums()[0] - 1);
+            columnSum += 1 << (TABLE[j][i].getNums()[0] - 1);
+            blockSum += 1 << (TABLE[ii][jj].getNums()[0] - 1);
+        }
+
+        if (rowSum != 511 || columnSum != 511 || blockSum != 511) finished = false;
+        if (!finished) break;
+    }
+
+    console.log("finished: " + finished);
+    return finished;
+}
+
+function checkFinished() {
+    if (isFinished()) {
+        setPause(true);
+        $("#undo").css("visibility", "hidden");
+        $("#redo").css("visibility", "hidden");
+        $("#start").css("visibility", "hidden");
+        $("#pause").css("visibility", "hidden");
+
+        $("#title_time").text("完成！").css("color", GREAT_BORDER_COLOR);
+
+        cancelCellSelection();
+    }
 }
