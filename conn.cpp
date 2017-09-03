@@ -1,4 +1,4 @@
-#include "conn.h"
+﻿#include "conn.h"
 #include <QDateTime>
 #include <random>
 
@@ -80,7 +80,7 @@ void Conn::requestPuzzle(int level) {
         }
     }
 
-    // dig♂
+    // dig
     for (int i = 0; i < blanksByLevel[level]; ++i) {
         int x, y;
         do {
