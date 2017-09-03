@@ -9,6 +9,8 @@ MARKED_COLOR = "#F4A7B9";
 PAUSE_COLOR = "#AAAAAA";
 BLACK_COLOR = "#000000";
 
+ANY_OPERATION = false;
+
 // initializer
 function initGameTable() {
     for (var i = 0; i < 9; ++i) {
@@ -58,16 +60,8 @@ window.onload = function() {
             board = obj.board;
             fixed = obj.fixed;
 
-            TABLE = [];
-
-            for (var i = 0; i < 9; ++i) {
-                TABLE[i] = [];
-
-                for (var j = 0; j < 9; ++j) {
-                    TABLE[i][j] = new Cell(i, j, fixed[i][j]);
-                    TABLE[i][j].setNums(TABLE[i][j].fixed ? [board[i][j]] : []);
-                }
-            }
+            RAW_BOARD = board;
+            RAW_FIXED = fixed;
 
             gameStartTrue();
         })
@@ -155,7 +149,8 @@ function onPauseClick() {
 }
 
 function onRestartClick() {
-    gameStart();
+    if (ANY_OPERATION) gameStartTrue();
+    else gameStart();
 }
 
 function onExitClick() {
@@ -190,6 +185,8 @@ function onNumberClick(i) {
 
     CONTAINS[i] = !CONTAINS[i];
     CELL_SELECTED.calcNums();
+
+    ANY_OPERATION = true;
 
     onSelectedCellContentChange();
 }
@@ -393,7 +390,22 @@ function gameStart() {
     getPuzzle();
 }
 
+RAW_BOARD = null;
+RAW_FIXED = null;
+
 function gameStartTrue() {
+    ANY_OPERATION = false;
+
+    TABLE = [];
+    for (var i = 0; i < 9; ++i) {
+        TABLE[i] = [];
+
+        for (var j = 0; j < 9; ++j) {
+            TABLE[i][j] = new Cell(i, j, RAW_FIXED[i][j]);
+            TABLE[i][j].setNums(TABLE[i][j].fixed ? [RAW_BOARD[i][j]] : []);
+        }
+    }
+
     resetTimer();
     startTimer();
     setPause(false);
@@ -412,7 +424,7 @@ function gameStartTrue() {
     }
 
     showTableContent();
-    refreshTableBackgroundColor();
+    cancelCellSelection();
     
     $("#redo").css("visibility", "hidden");
     $("#undo").css("visibility", "hidden");
@@ -555,5 +567,7 @@ function checkFinished() {
         $("#title_time").text("完成！").css("color", GREAT_BORDER_COLOR);
 
         cancelCellSelection();
+
+        ANY_OPERATION = false; // don't do what you've done again
     }
 }
