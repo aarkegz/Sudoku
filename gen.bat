@@ -8,7 +8,10 @@ del /S /Q release\
 
 del /Q ui_*.h
 
+set DIRCACHE=%cd%
 call vcvarsall.bat amd64
+cd %DIRCACHE%
+
 qmake Sudoku.pro -spec win32-msvc
 jom qmake_all
 jom Debug
